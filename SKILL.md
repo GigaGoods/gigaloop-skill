@@ -23,7 +23,7 @@ Hand-written goal conditions reliably omit three things: the **kill switch**, th
 
 **Steps 1–4 are silent** — do them in your reasoning, never in the reply.
 
-**Output contract.** When you emit, your *entire* user-facing reply is the `/goal` line and nothing else — optionally one trailing line `Sidecar: <path>`. It starts with `/goal ` and ends with the completion clause. No `INGEST:`/`CLARIFY:`/`CHECK:` headers, no classification rationale, no "All details established, emitting directly." In the two ask-and-stop cases (no task, or an unknown irreversible target), your entire reply is instead just the 1–3 picker questions — no goal, no preamble, no promise to deliver later.
+**Output contract.** When you emit, your *entire* user-facing reply is the `/goal` line and nothing else. The operator copies the **whole reply** into `/goal`, so it must contain only the goal. Do **NOT** add a trailing `Sidecar:` note or any other line — the sidecar path already lives inside the goal body (the `Read <path> now` line), and a duplicate note just gets copied into the condition and can push it past 4000. It starts with `/goal ` and ends with the completion clause. No `INGEST:`/`CLARIFY:`/`CHECK:` headers, no classification rationale, no "All details established, emitting directly." In the two ask-and-stop cases (no task, or an unknown irreversible target), your entire reply is instead just the 1–3 picker questions — no goal, no preamble, no promise to deliver later.
 
 ## When to ask first (CLARIFY)
 
@@ -70,18 +70,18 @@ The loop classifies each action **before** doing it:
 
 **Master test:** "Can I undo this in under 5 minutes with one command?" Yes → not STOP-AND-ASK. And the action the operator explicitly asked for is always PROCEED — gating it would deadlock the loop. This is what keeps the loop autonomous on the routine 95% instead of bailing on every file write.
 
-## Budget & portability — one-shot under 4000
+## Budget & portability — one-shot under 4000 (target ~3,600)
 
-Land under 4000 on the **first** emit. Do NOT draft fat and trim in public — that's the failure this section exists to prevent. Budget *before* you write:
+The hard cap is 4000 **characters**, but **target ~3,600** — leave ~400 of margin, because the operator copies the whole reply and paste/indentation can silently add ~100+ chars. Do NOT draft fat and trim in public. Budget *before* you write:
 
-- **Fixed boilerplate ≈ 2,800 chars** — the verbatim autonomy block (~1,300) + the kill-switch tier text + the done/heartbeat/backstop/evaluator skeleton + the context-header template. You don't get to shrink these.
-- **That leaves ≈ 1,200 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 1,200 as a hard variable budget.** Each optional paragraph you add (code, subagent) spends ~250–300 of it — include them only when they apply.
+- **Fixed boilerplate ≈ 2,800 chars** — the verbatim autonomy block (~1,300) + the kill-switch tier text + the done/heartbeat/backstop/completion skeleton + the context-header template. You don't get to shrink these.
+- **That leaves ≈ 800 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 800 as a hard variable budget.** Each optional paragraph you add (code, subagent) spends ~250–300 of it — include them only when they truly apply, and put method detail in the sidecar instead.
 
 **Offload FIRST, not after.** Before drafting the goal, write any heavy detail — edit-point lists, TDD/verification steps, schemas, acceptance criteria, out-of-scope lists, long context — to the sidecar, and reference it in **one short line**. Keep the task statement to 2–4 sentences. Do **not** describe what's in the sidecar ("it holds the 6 edit points, the TDD plan, the verification steps, the out-of-scope list…") — that description is itself the bloat; a bare "Read `<path>` now — follow it" is enough.
 
 **Sidecar mechanics:** resolve a dir at runtime — `${XDG_CACHE_HOME:-$HOME/.cache}/gigaloop/`, fallback `${TMPDIR:-/tmp}/gigaloop/` — `mkdir -p`, write `<slug>-<timestamp>.md` (or, inside a repo, a `tasks/<slug>.md` the executor can read). **Never** hardcode a user-specific absolute path — it must publish and run on any machine. Add to the kill switch: "stop if `<path>` is missing." Never offload the kill switch, done condition, or autonomy block.
 
-**Count once, silently, before emit.** Pipe the drafted condition through `wc -c`. If it's over 4000, the fix is **more offload** or dropping an optional paragraph — never trimming the verbatim blocks. Do this in your reasoning; the operator sees only the final, already-under-4000 line.
+**Count once, silently, before emit.** Measure the **whole reply** in *characters* — `wc -m` (or python `len`), not `wc -c` (bytes: em-dashes and other non-ASCII count as multiple bytes and mislead you). If it's over ~3,600, the fix is **more offload** or dropping an optional paragraph — never trimming the verbatim blocks. Do this in your reasoning; the operator sees only the final, in-budget line.
 
 ## The checks (all must pass before EMIT)
 
@@ -89,7 +89,7 @@ Land under 4000 on the **first** emit. Do NOT draft fat and trim in public — t
 2. Done condition names an exact command **and** says "paste the output."
 3. Autonomy block present, verbatim.
 4. No Fable anti-patterns: no "show/explain your reasoning", no token/turn countdown, no "summarize if context fills up", kill switch is not a vague adjective.
-5. Condition ≤4000 chars on the **first** emit — achieved by offloading detail to the sidecar up front (~1,200-char variable budget), not by drafting fat and trimming in public.
+5. Whole emitted reply ≤ ~3,600 **characters** (count with `wc -m`/`len`, not bytes; ~400 margin for paste whitespace) on the **first** emit — achieved by offloading to the sidecar (~800-char variable budget) and emitting **no** trailing `Sidecar:` note, not by drafting fat and trimming in public.
 6. Emitted message is the `/goal` line only (no INGEST/CLARIFY preamble), produced **now** — not promised for later. (Exception: the no-task and irreversible-target cases correctly end the turn on picker questions instead.)
 7. Kill switch does **not** list the operator's own requested action (that would deadlock the loop); it lists only beyond-scope irreversible actions.
 8. Completion clause is **positive and self-clearing**, judged on the latest state — it does **not** key on any phrase quoted in the goal (no "not met if transcript contains …" sentinel), so the goal can actually be marked met and auto-clear without a manual `/goal clear`.
