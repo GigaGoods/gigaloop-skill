@@ -23,7 +23,7 @@ Hand-written goal conditions reliably omit three things: the **kill switch**, th
 
 **Steps 1–4 are silent** — do them in your reasoning, never in the reply.
 
-**Output contract.** When you emit, your *entire* user-facing reply is the `/goal` line and nothing else — optionally one trailing line `Sidecar: <path>`. It starts with `/goal ` and ends with the evaluator note. No `INGEST:`/`CLARIFY:`/`CHECK:` headers, no classification rationale, no "All details established, emitting directly." In the two ask-and-stop cases (no task, or an unknown irreversible target), your entire reply is instead just the 1–3 picker questions — no goal, no preamble, no promise to deliver later.
+**Output contract.** When you emit, your *entire* user-facing reply is the `/goal` line and nothing else — optionally one trailing line `Sidecar: <path>`. It starts with `/goal ` and ends with the completion clause. No `INGEST:`/`CLARIFY:`/`CHECK:` headers, no classification rationale, no "All details established, emitting directly." In the two ask-and-stop cases (no task, or an unknown irreversible target), your entire reply is instead just the 1–3 picker questions — no goal, no preamble, no promise to deliver later.
 
 ## When to ask first (CLARIFY)
 
@@ -58,7 +58,7 @@ One round only. Leftover unknowns become **stated assumptions** in the goal's co
 - **KILL SWITCH** — name **3–6 concrete action categories** that force STOP-AND-ASK. Use specifics: "DROP/TRUNCATE/DELETE without WHERE", "force-push or merge to main", "deleting unversioned files", "rotating live keys", "using a credential not already configured". **Never** abstract adjectives ("risky", "dangerous"). **Authorized-action carve-out (critical):** the operator's explicitly-requested action is **authorized** — do NOT list it as STOP-AND-ASK, or the loop deadlocks on turn one. A goal told to "send the follow-ups" must list *re-sending to already-sent records / sending outside the target set / new credentials / sending before the DB path and send-script are confirmed* — **not** "sending emails" itself. The kill switch gates what goes **beyond** the request, never the request. If nothing beyond-scope is irreversible, write: "No irreversible actions beyond the requested work; proceed throughout."
 - **DONE CONDITION** — name the **exact command/observable** and instruct the agent to **paste its full output** into the conversation. "Tests pass" is unprovable; "run `npm test`, paste the full output; met only when it shows 0 failures" is.
 - **HEARTBEAT + BACKSTOP** — paste a STATUS line every ~15 turns; stop and summarize at 200 turns. No other turn cap (the real stop is validation, not a timer).
-- **EVALUATOR NOTE** — "goal is NOT met if the transcript contains `KILL-SWITCH FIRED:`".
+- **COMPLETION clause** — a positive, **self-clearing** completion the evaluator confirms from the *latest* state: "met when [validation evidence] is present and passing; judge the most recent state only; also finished if the loop's latest message is a genuine operator-only question." **NEVER** phrase it as "not met if the transcript contains `<phrase>`" keyed on the kill-switch sentinel or any text quoted in the goal — that string is already in the goal, so the goal could never be marked met and would never auto-clear (it would force a manual `/goal clear`). The kill switch still emits its sentinel for humans; the evaluator just must not key on it.
 
 ## Kill-switch tiers (calibration — do not over-fire)
 
@@ -92,5 +92,6 @@ Land under 4000 on the **first** emit. Do NOT draft fat and trim in public — t
 5. Condition ≤4000 chars on the **first** emit — achieved by offloading detail to the sidecar up front (~1,200-char variable budget), not by drafting fat and trimming in public.
 6. Emitted message is the `/goal` line only (no INGEST/CLARIFY preamble), produced **now** — not promised for later. (Exception: the no-task and irreversible-target cases correctly end the turn on picker questions instead.)
 7. Kill switch does **not** list the operator's own requested action (that would deadlock the loop); it lists only beyond-scope irreversible actions.
+8. Completion clause is **positive and self-clearing**, judged on the latest state — it does **not** key on any phrase quoted in the goal (no "not met if transcript contains …" sentinel), so the goal can actually be marked met and auto-clear without a manual `/goal clear`.
 
 **REQUIRED:** copy the fill-in template and verbatim blocks from `goal-template.md`.

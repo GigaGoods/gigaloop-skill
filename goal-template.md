@@ -65,9 +65,12 @@ shows [PASS CRITERION]. Every ~15 turns,
 paste a STATUS line (done / remaining / blockers). Backstop: if you reach 200 turns without completion,
 stop and paste a STATUS summary.
 
-EVALUATOR NOTE: The goal is NOT met if the transcript contains "KILL-SWITCH FIRED:" (the loop is paused
-for operator input) or if the validation output above is absent or failing. It is met only when that
-output is present AND passing AND no unanswered KILL-SWITCH FIRED block exists.
+COMPLETION (for the evaluator): Judge ONLY the most recent state of the conversation, never an earlier
+message. This goal is met when the validation output above is present and shows [PASS CRITERION]. It is
+ALSO finished if the loop's latest message is a specific question that only the operator can answer
+(genuinely blocked), so a paused loop ends cleanly instead of re-looping. Do NOT key on any phrase
+quoted in this goal (including the kill-switch wording) — judge solely by the latest validation evidence
+or the latest blocking question.
 ```
 
 ---
