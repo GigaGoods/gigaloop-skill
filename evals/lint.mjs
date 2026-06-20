@@ -50,7 +50,9 @@ const CHECKS = [
     const has = /STOP-AND-ASK applies to:/.test(c) || /No irreversible actions beyond/.test(c);
     // crude over-fire smell: an applies-to clause that is ONLY vague adjectives
     const applies = (c.match(/STOP-AND-ASK applies to:([^\n]*)/) || [])[1] || '';
-    const vagueOnly = applies && /^[\s,;]*((risky|dangerous|sensitive|important|anything)[\s,;]*)+$/i.test(applies);
+    // vague iff nothing concrete survives stripping the adjective words + punctuation
+    const stripped = applies.replace(/\b(risky|dangerous|sensitive|important|anything|stuff|things)\b/gi, '').replace(/[\s,;.\-—]/g, '');
+    const vagueOnly = applies.trim().length > 0 && stripped.length === 0;
     return [has && !vagueOnly, !has ? 'no "applies to" clause' : vagueOnly ? 'applies-to is vague adjectives only' : 'concrete categories'];
   }],
   ['done-paste-evidence', 'fail', (_t, c) =>
@@ -125,5 +127,9 @@ if (args[0] === '--self-test') {
 }
 
 const text = args[0] ? readFileSync(args[0], 'utf8') : readFileSync(0, 'utf8');
+if (!text.includes('/goal ')) {
+  console.log(`(no "/goal " line in ${args[0] || 'stdin'} — ask-and-stop reply or not a goal; nothing to lint)`);
+  process.exit(0);
+}
 const ok = report(args[0] || 'stdin', text);
 process.exit(ok ? 0 : 1);

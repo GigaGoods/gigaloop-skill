@@ -2,8 +2,8 @@
 
 Copy the block below, replace every `[BRACKET]` slot, keep the **verbatim** blocks exactly as written
 (do not paraphrase them — they are tested Fable 5 language), then emit the result as a single
-`/goal …` line. Drop the optional blocks that don't apply. Target ≤4000 chars; offload overflow to a
-portable sidecar (see SKILL.md "Budget & portability").
+`/goal …` line. Drop the optional blocks that don't apply. Target ≤ ~3,800 chars (hard cap 4,000);
+offload overflow to a portable sidecar (see SKILL.md "Budget & portability").
 
 ---
 
@@ -90,7 +90,7 @@ or the latest blocking question.
 
 ## Notes
 
-- Keep the four core autonomy paragraphs verbatim. The OPTIONAL paragraphs (code / subagents /
+- Keep the three core autonomy paragraphs verbatim. The OPTIONAL paragraphs (code / subagents /
   progress-file) are included only when they apply — progress-file only for long, multi-phase loops.
 - The kill switch and the DONE/EVALUATOR blocks are **never** offloaded to the sidecar — they must
   survive even if the sidecar file is missing.

@@ -28,8 +28,8 @@ Injected live when the skill loads — INGEST uses these real values to ground t
 
 1. **INGEST** — from the invocation args + the conversation so far + anything said alongside, extract: the **TASK**, the **DONE state**, **constraints**, and the **RISK** (does the task involve any irreversible/external action — real sends, prod/deploy changes, destructive data or VCS ops?).
 2. **CLARIFY** (via the picker / AskUserQuestion) — apply the decision rule below. One round only.
-3. **DRAFT (offload-first)** — write any heavy detail to the sidecar **first**, then fill the template with a tight task statement + a one-line sidecar reference. Stay inside the ~1,200-char variable budget (see Budget below) so the first draft is already under 4000.
-4. **CHECK** — run the checks below; silently `wc -c` the condition. If anything fails (including >4000), fix it **before** emitting — by offloading more detail, never by trimming in public.
+3. **DRAFT (offload-first)** — write any heavy detail to the sidecar **first**, then fill the template with a tight task statement + a one-line sidecar reference. Stay within the variable budget (see Budget below) so the first draft is already in range.
+4. **CHECK** — run the checks below; silently measure the condition in *characters* (`wc -m`, not `wc -c`). If anything fails (including over budget), fix it **before** emitting — by offloading more detail, never by trimming in public.
 5. **EMIT** — see the Output contract below.
 
 **Steps 1–4 are silent** — do them in your reasoning, never in the reply.
@@ -85,8 +85,8 @@ The loop classifies each action **before** doing it:
 
 The hard cap is 4000 **characters**. **Keep the reply ≤ ~3,800** — ~200 of margin under the 4000 wall for paste/indentation. The verbatim boilerplate alone runs ~2,900; with the kill-switch categories + done specifics a normal goal lands ~3,500–3,800. **If optionals (code / subagent / progress-file) would push it past ~3,800, offload the task detail to the sidecar and drop any optional that isn't pulling its weight — never let a goal approach 4000.** Do NOT draft fat and trim in public. Budget *before* you write:
 
-- **Fixed boilerplate ≈ 2,800 chars** — the verbatim autonomy block (~1,300) + the kill-switch tier text + the done/heartbeat/backstop/completion skeleton + the context-header template. You don't get to shrink these.
-- **That leaves ≈ 800 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 800 as a hard variable budget.** Each optional paragraph you add (code, subagent, progress-file) spends ~250–300 of it — include them only when they truly apply, and put method detail in the sidecar instead.
+- **Fixed boilerplate ≈ 2,900 chars** — the verbatim autonomy block (~1,300) + the kill-switch tier text + the done/heartbeat/backstop/completion skeleton + the context-header template. You don't get to shrink these.
+- **That leaves ≈ 900 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 900 as a hard variable budget.** Each optional paragraph you add (code, subagent, progress-file) spends ~250–300 of it — include them only when they truly apply, and put method detail in the sidecar instead.
 
 **Offload FIRST, not after.** Before drafting the goal, write any heavy detail — edit-point lists, TDD/verification steps, schemas, acceptance criteria, out-of-scope lists, long context — to the sidecar, and reference it in **one short line**. Keep the task statement to 2–4 sentences. Do **not** describe what's in the sidecar ("it holds the 6 edit points, the TDD plan, the verification steps, the out-of-scope list…") — that description is itself the bloat; a bare "Read `<path>` now — follow it" is enough.
 
