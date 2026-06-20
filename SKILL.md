@@ -1,6 +1,9 @@
 ---
 name: gigaloop
 description: Use when the operator types /gigaloop, or asks you to write a /goal condition, goal prompt, or loop prompt for an autonomous multi-turn run. Triggers on turning the current conversation and task into a single copy-pasteable /goal line. Also covers "build me a goal", "make a loop prompt", "set up an autonomous loop".
+disable-model-invocation: true
+argument-hint: [what the loop should accomplish]
+allowed-tools: Bash(wc *) Bash(mkdir *) Write AskUserQuestion
 ---
 
 # gigaloop
@@ -12,6 +15,14 @@ Turn the operator's current task into **one copy-pasteable `/goal <condition>` l
 `/goal` keeps Claude taking turns until a small fast model (Haiku) confirms the condition is met. That evaluator reads **only the transcript** and **runs no tools**, so the goal must be provable from what the loop pastes into the conversation. Max **4000 characters**.
 
 Hand-written goal conditions reliably omit three things: the **kill switch**, the **"paste the evidence"** instruction, and the **autonomy block**. Without them, loops stall asking permission, blow through irreversible actions (real sends, prod restarts), or get marked complete on unproven prose. This skill's job is to never let a goal ship missing them.
+
+## Working context
+
+Injected live when the skill loads — INGEST uses these real values to ground the goal's context header and validation commands instead of guessing:
+
+- cwd: !`pwd`
+- branch: !`git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "(no git)"`
+- recent: !`git log --oneline -5 2>/dev/null || echo "(no git)"`
 
 ## Procedure
 
@@ -51,13 +62,13 @@ One round only. Leftover unknowns become **stated assumptions** in the goal's co
 
 ## Every goal MUST contain (fill-in contract)
 
-`goal-template.md` is a template with REQUIRED slots. A goal missing any of these is not done:
+`${CLAUDE_SKILL_DIR}/goal-template.md` is a template with REQUIRED slots. A goal missing any of these is not done:
 
 - **CONTEXT HEADER** — "I'm working on X for Y. They need Z."
 - **AUTONOMY BLOCK** — verbatim from the template (never paraphrase).
 - **KILL SWITCH** — name **3–6 concrete action categories** that force STOP-AND-ASK. Use specifics: "DROP/TRUNCATE/DELETE without WHERE", "force-push or merge to main", "deleting unversioned files", "rotating live keys", "using a credential not already configured". **Never** abstract adjectives ("risky", "dangerous"). **Authorized-action carve-out (critical):** the operator's explicitly-requested action is **authorized** — do NOT list it as STOP-AND-ASK, or the loop deadlocks on turn one. A goal told to "send the follow-ups" must list *re-sending to already-sent records / sending outside the target set / new credentials / sending before the DB path and send-script are confirmed* — **not** "sending emails" itself. The kill switch gates what goes **beyond** the request, never the request. If nothing beyond-scope is irreversible, write: "No irreversible actions beyond the requested work; proceed throughout."
 - **DONE CONDITION** — name the **exact command/observable** and instruct the agent to **paste its full output** into the conversation. "Tests pass" is unprovable; "run `npm test`, paste the full output; met only when it shows 0 failures" is.
-- **HEARTBEAT + BACKSTOP** — paste a STATUS line every ~15 turns; stop and summarize at 200 turns. No other turn cap (the real stop is validation, not a timer).
+- **HEARTBEAT + BACKSTOP** — paste a STATUS line every ~15 turns; if 2 in a row stall or repeat an error, stop and surface it (circuit breaker); stop and summarize at 200 turns. No other turn cap (the real stop is validation, not a timer).
 - **COMPLETION clause** — a positive, **self-clearing** completion the evaluator confirms from the *latest* state: "met when [validation evidence] is present and passing; judge the most recent state only; also finished if the loop's latest message is a genuine operator-only question." **NEVER** phrase it as "not met if the transcript contains `<phrase>`" keyed on the kill-switch sentinel or any text quoted in the goal — that string is already in the goal, so the goal could never be marked met and would never auto-clear (it would force a manual `/goal clear`). The kill switch still emits its sentinel for humans; the evaluator just must not key on it.
 
 ## Kill-switch tiers (calibration — do not over-fire)
@@ -72,16 +83,16 @@ The loop classifies each action **before** doing it:
 
 ## Budget & portability — one-shot under 4000 (target ~3,600)
 
-The hard cap is 4000 **characters**, but **target ~3,600** — leave ~400 of margin, because the operator copies the whole reply and paste/indentation can silently add ~100+ chars. Do NOT draft fat and trim in public. Budget *before* you write:
+The hard cap is 4000 **characters**. **Keep the reply ≤ ~3,800** — ~200 of margin under the 4000 wall for paste/indentation. The verbatim boilerplate alone runs ~2,900; with the kill-switch categories + done specifics a normal goal lands ~3,500–3,800. **If optionals (code / subagent / progress-file) would push it past ~3,800, offload the task detail to the sidecar and drop any optional that isn't pulling its weight — never let a goal approach 4000.** Do NOT draft fat and trim in public. Budget *before* you write:
 
 - **Fixed boilerplate ≈ 2,800 chars** — the verbatim autonomy block (~1,300) + the kill-switch tier text + the done/heartbeat/backstop/completion skeleton + the context-header template. You don't get to shrink these.
-- **That leaves ≈ 800 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 800 as a hard variable budget.** Each optional paragraph you add (code, subagent) spends ~250–300 of it — include them only when they truly apply, and put method detail in the sidecar instead.
+- **That leaves ≈ 800 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 800 as a hard variable budget.** Each optional paragraph you add (code, subagent, progress-file) spends ~250–300 of it — include them only when they truly apply, and put method detail in the sidecar instead.
 
 **Offload FIRST, not after.** Before drafting the goal, write any heavy detail — edit-point lists, TDD/verification steps, schemas, acceptance criteria, out-of-scope lists, long context — to the sidecar, and reference it in **one short line**. Keep the task statement to 2–4 sentences. Do **not** describe what's in the sidecar ("it holds the 6 edit points, the TDD plan, the verification steps, the out-of-scope list…") — that description is itself the bloat; a bare "Read `<path>` now — follow it" is enough.
 
 **Sidecar mechanics:** resolve a dir at runtime — `${XDG_CACHE_HOME:-$HOME/.cache}/gigaloop/`, fallback `${TMPDIR:-/tmp}/gigaloop/` — `mkdir -p`, write `<slug>-<timestamp>.md` (or, inside a repo, a `tasks/<slug>.md` the executor can read). **Never** hardcode a user-specific absolute path — it must publish and run on any machine. Add to the kill switch: "stop if `<path>` is missing." Never offload the kill switch, done condition, or autonomy block.
 
-**Count once, silently, before emit.** Measure the **whole reply** in *characters* — `wc -m` (or python `len`), not `wc -c` (bytes: em-dashes and other non-ASCII count as multiple bytes and mislead you). If it's over ~3,600, the fix is **more offload** or dropping an optional paragraph — never trimming the verbatim blocks. Do this in your reasoning; the operator sees only the final, in-budget line.
+**Count once, silently, before emit.** Measure the **whole reply** in *characters* — `wc -m` (or python `len`), not `wc -c` (bytes: em-dashes and other non-ASCII count as multiple bytes and mislead you). If it's over ~3,800, the fix is **more offload** or dropping an optional paragraph — never trimming the verbatim blocks. Do this in your reasoning; the operator sees only the final, in-budget line.
 
 ## The checks (all must pass before EMIT)
 
@@ -89,9 +100,13 @@ The hard cap is 4000 **characters**, but **target ~3,600** — leave ~400 of mar
 2. Done condition names an exact command **and** says "paste the output."
 3. Autonomy block present, verbatim.
 4. No Fable anti-patterns: no "show/explain your reasoning", no token/turn countdown, no "summarize if context fills up", kill switch is not a vague adjective.
-5. Whole emitted reply ≤ ~3,600 **characters** (count with `wc -m`/`len`, not bytes; ~400 margin for paste whitespace) on the **first** emit — achieved by offloading to the sidecar (~800-char variable budget) and emitting **no** trailing `Sidecar:` note, not by drafting fat and trimming in public.
+5. Whole emitted reply ≤ ~3,800 **characters** (count with `wc -m`/`len`, not bytes; ~200 margin under the 4000 wall) on the **first** emit — achieved by offloading to the sidecar and emitting **no** trailing `Sidecar:` note; if optionals push it near 4000, offload more and drop weak optionals.
 6. Emitted message is the `/goal` line only (no INGEST/CLARIFY preamble), produced **now** — not promised for later. (Exception: the no-task and irreversible-target cases correctly end the turn on picker questions instead.)
 7. Kill switch does **not** list the operator's own requested action (that would deadlock the loop); it lists only beyond-scope irreversible actions.
 8. Completion clause is **positive and self-clearing**, judged on the latest state — it does **not** key on any phrase quoted in the goal (no "not met if transcript contains …" sentinel), so the goal can actually be marked met and auto-clear without a manual `/goal clear`.
 
-**REQUIRED:** copy the fill-in template and verbatim blocks from `goal-template.md`.
+**REQUIRED:** copy the fill-in template and verbatim blocks from `${CLAUDE_SKILL_DIR}/goal-template.md`.
+
+## Evals
+
+Regression scenarios live in `${CLAUDE_SKILL_DIR}/evals/evals.json` (rich-code, no-task, irreversible+underspecified, prod-deploy, heavy-budget). Run them with the skill-creator plugin (subagent-per-case, with/without benchmark) if installed.

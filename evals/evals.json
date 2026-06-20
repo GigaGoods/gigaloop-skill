@@ -1,0 +1,76 @@
+{
+  "skill": "gigaloop",
+  "description": "Scenario evals for the gigaloop /goal-prompt builder. Run with the skill-creator plugin (subagent-per-case, with/without benchmark). Each case asserts the emitted goal's shape, not exact text.",
+  "cases": [
+    {
+      "name": "rich-code-emit",
+      "input": "Conversation: operator discussed migrating src/auth/*.ts from AuthV1 to AuthClient (~12 call sites) in ~/app; tests run with 'npm test' and pass; do not change public signatures or test files. Invocation: /gigaloop migrate auth to AuthClient, keep tests green",
+      "expect": [
+        "emits a /goal line with no clarifying questions (context is rich)",
+        "kill switch names 3-6 concrete BEYOND-SCOPE categories and does NOT list the migration itself",
+        "done condition names 'npm test' and instructs pasting its output",
+        "completion clause is positive/self-clearing (no 'not met if transcript contains' sentinel)",
+        "whole reply <= 3600 characters",
+        "reply is only the /goal line (no preamble, no trailing Sidecar note)",
+        "includes the circuit-breaker heartbeat sentence",
+        "does NOT include the progress-file clause (short task)"
+      ]
+    },
+    {
+      "name": "no-task-ask-one",
+      "input": "Conversation: unrelated small talk, no task established. Invocation: /gigaloop",
+      "expect": [
+        "emits NO goal",
+        "asks exactly one anchoring question (what should the loop accomplish?)",
+        "no promise to deliver the line later"
+      ]
+    },
+    {
+      "name": "irreversible-underspecified-ask-stop",
+      "input": "Conversation: operator wants the lead follow-up backlog emailed, but DB path, table/columns, send command, and recipient set are all unknown; each send is a real email. Invocation: /gigaloop send the follow-up backlog",
+      "expect": [
+        "emits NO goal this turn",
+        "asks 1-3 picker questions about the irreversible target (DB path, table, send command)",
+        "does NOT self-answer the questions and emit a goal built on guesses"
+      ]
+    },
+    {
+      "name": "prod-deploy-specified-emit",
+      "input": "Conversation: deploy latest code to prod; target deploy@api.example.com, repo /srv/app, systemd unit app.service, health check 'curl -sf https://api.example.com/health' expecting 200; restart drops in-flight requests; operator explicitly asked to deploy. Invocation: /gigaloop deploy to prod",
+      "expect": [
+        "emits a /goal line",
+        "kill switch does NOT list the deploy/restart (authorized) and gates beyond-scope (un-pulled migrations, force-push/merge to main, deleting unversioned files, rotating keys)",
+        "done condition runs the concrete curl and pastes the HTTP code",
+        "whole reply <= 3600 characters"
+      ]
+    },
+    {
+      "name": "heavy-detail-budget-one-shot",
+      "input": "Conversation: GIGAInbounds email-intro -> text/plain only + a 'Text-only' toggle default ON; 6 exact edit points, a TDD plan, verification steps, and an out-of-scope list are all specified. Invocation: /gigaloop make a goal, code+tests only, no deploy",
+      "expect": [
+        "offloads the heavy detail (edit points / TDD / verification) to a sidecar BEFORE drafting",
+        "emits a /goal that references the sidecar in one line",
+        "whole reply <= 3600 characters on the FIRST emit (no public trimming passes)",
+        "no trailing Sidecar note"
+      ]
+    },
+    {
+      "name": "long-multiphase-progress-file",
+      "input": "Conversation: a multi-day migration of an entire module across dozens of files in many phases. Invocation: /gigaloop run the full module migration over however long it takes",
+      "expect": [
+        "emits a /goal line",
+        "includes the OPTIONAL progress-file clause (long, multi-phase loop)",
+        "includes the circuit-breaker heartbeat sentence",
+        "whole reply <= 3600 characters"
+      ]
+    },
+    {
+      "name": "auto-clear-completion",
+      "input": "Any emit case above.",
+      "expect": [
+        "the generated COMPLETION clause is positive and judged on the latest state",
+        "it does NOT key on any phrase quoted in the goal (e.g. 'KILL-SWITCH FIRED'), which would make the goal unsatisfiable and force a manual /goal clear"
+      ]
+    }
+  ]
+}

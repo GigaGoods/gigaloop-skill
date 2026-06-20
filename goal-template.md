@@ -42,6 +42,9 @@ beyond what the task requires. Do the simplest thing that works. Only validate a
 subagents and keep working while they run. Spawn a subagent only for work where subagent A does not need
 subagent B's output to start; for sequential work, execute inline.
 
+[OPTIONAL, long multi-phase loops only:] Keep a progress note at [SIDECAR DIR]/[SLUG]-progress.md —
+append one line per phase (changed / next / blockers) and re-read it each phase.
+
 KILL SWITCH: Before any action, classify it: PROCEED (reversible, in-scope — just do it),
 LOG-AND-CONTINUE (notable but recoverable — log one line then keep going), or STOP-AND-ASK
 (irreversible, out-of-scope blast radius, or authorization unclear). If STOP-AND-ASK: output exactly
@@ -62,8 +65,8 @@ DONE WHEN: the work is built and validated. Run [EXACT VALIDATION COMMAND — co
 no inline "correct if differs" conditionals; if you lack a real value it needs, you owed a clarifying
 question first] and paste its full output into this conversation; the goal is met only when that output
 shows [PASS CRITERION]. Every ~15 turns,
-paste a STATUS line (done / remaining / blockers). Backstop: if you reach 200 turns without completion,
-stop and paste a STATUS summary.
+paste a STATUS line (done / remaining / blockers); if 2 in a row stall or repeat an error, stop and
+surface it. Backstop: if you reach 200 turns without completion, stop and paste a STATUS summary.
 
 COMPLETION (for the evaluator): Judge ONLY the most recent state of the conversation, never an earlier
 message. This goal is met when the validation output above is present and shows [PASS CRITERION]. It is
@@ -87,8 +90,8 @@ or the latest blocking question.
 
 ## Notes
 
-- Keep the four core autonomy paragraphs verbatim. The two OPTIONAL paragraphs (code / subagents) are
-  included only when they apply.
+- Keep the four core autonomy paragraphs verbatim. The OPTIONAL paragraphs (code / subagents /
+  progress-file) are included only when they apply — progress-file only for long, multi-phase loops.
 - The kill switch and the DONE/EVALUATOR blocks are **never** offloaded to the sidecar — they must
   survive even if the sidecar file is missing.
 - Do not add a low turn cap (e.g. "stop after 15 turns"). The heartbeat + 200-turn backstop are the
