@@ -17,8 +17,8 @@ Hand-written goal conditions reliably omit three things: the **kill switch**, th
 
 1. **INGEST** — from the invocation args + the conversation so far + anything said alongside, extract: the **TASK**, the **DONE state**, **constraints**, and the **RISK** (does the task involve any irreversible/external action — real sends, prod/deploy changes, destructive data or VCS ops?).
 2. **CLARIFY** (via the picker / AskUserQuestion) — apply the decision rule below. One round only.
-3. **DRAFT** — copy `goal-template.md` and fill **every** REQUIRED slot. Never drop one.
-4. **CHECK** — run the checks below; fix any failure before emitting.
+3. **DRAFT (offload-first)** — write any heavy detail to the sidecar **first**, then fill the template with a tight task statement + a one-line sidecar reference. Stay inside the ~1,200-char variable budget (see Budget below) so the first draft is already under 4000.
+4. **CHECK** — run the checks below; silently `wc -c` the condition. If anything fails (including >4000), fix it **before** emitting — by offloading more detail, never by trimming in public.
 5. **EMIT** — see the Output contract below.
 
 **Steps 1–4 are silent** — do them in your reasoning, never in the reply.
@@ -70,9 +70,18 @@ The loop classifies each action **before** doing it:
 
 **Master test:** "Can I undo this in under 5 minutes with one command?" Yes → not STOP-AND-ASK. And the action the operator explicitly asked for is always PROCEED — gating it would deadlock the loop. This is what keeps the loop autonomous on the routine 95% instead of bailing on every file write.
 
-## Budget & portability
+## Budget & portability — one-shot under 4000
 
-Keep the **`/goal` condition text** (everything after `/goal `) **≤4000 chars** — the cap is on the condition, not your whole turn. If task context (schemas, long criteria, docs) would blow the budget, offload it: resolve a dir at runtime — `${XDG_CACHE_HOME:-$HOME/.cache}/gigaloop/`, fallback `${TMPDIR:-/tmp}/gigaloop/` — `mkdir -p`, write `<slug>-<timestamp>.md`, then in the goal add "Read `<resolved path>` now" plus, in the kill switch, "stop if that file is missing." **Never** hardcode a user-specific absolute path — it must publish and run on any machine. Never offload the kill switch, done condition, or autonomy block.
+Land under 4000 on the **first** emit. Do NOT draft fat and trim in public — that's the failure this section exists to prevent. Budget *before* you write:
+
+- **Fixed boilerplate ≈ 2,800 chars** — the verbatim autonomy block (~1,300) + the kill-switch tier text + the done/heartbeat/backstop/evaluator skeleton + the context-header template. You don't get to shrink these.
+- **That leaves ≈ 1,200 chars** for *everything* you author: context header, task statement, the kill-switch categories, and the done-condition specifics. **Treat 1,200 as a hard variable budget.** Each optional paragraph you add (code, subagent) spends ~250–300 of it — include them only when they apply.
+
+**Offload FIRST, not after.** Before drafting the goal, write any heavy detail — edit-point lists, TDD/verification steps, schemas, acceptance criteria, out-of-scope lists, long context — to the sidecar, and reference it in **one short line**. Keep the task statement to 2–4 sentences. Do **not** describe what's in the sidecar ("it holds the 6 edit points, the TDD plan, the verification steps, the out-of-scope list…") — that description is itself the bloat; a bare "Read `<path>` now — follow it" is enough.
+
+**Sidecar mechanics:** resolve a dir at runtime — `${XDG_CACHE_HOME:-$HOME/.cache}/gigaloop/`, fallback `${TMPDIR:-/tmp}/gigaloop/` — `mkdir -p`, write `<slug>-<timestamp>.md` (or, inside a repo, a `tasks/<slug>.md` the executor can read). **Never** hardcode a user-specific absolute path — it must publish and run on any machine. Add to the kill switch: "stop if `<path>` is missing." Never offload the kill switch, done condition, or autonomy block.
+
+**Count once, silently, before emit.** Pipe the drafted condition through `wc -c`. If it's over 4000, the fix is **more offload** or dropping an optional paragraph — never trimming the verbatim blocks. Do this in your reasoning; the operator sees only the final, already-under-4000 line.
 
 ## The checks (all must pass before EMIT)
 
@@ -80,7 +89,7 @@ Keep the **`/goal` condition text** (everything after `/goal `) **≤4000 chars*
 2. Done condition names an exact command **and** says "paste the output."
 3. Autonomy block present, verbatim.
 4. No Fable anti-patterns: no "show/explain your reasoning", no token/turn countdown, no "summarize if context fills up", kill switch is not a vague adjective.
-5. ≤4000 chars (offload overflow to a portable sidecar).
+5. Condition ≤4000 chars on the **first** emit — achieved by offloading detail to the sidecar up front (~1,200-char variable budget), not by drafting fat and trimming in public.
 6. Emitted message is the `/goal` line only (no INGEST/CLARIFY preamble), produced **now** — not promised for later. (Exception: the no-task and irreversible-target cases correctly end the turn on picker questions instead.)
 7. Kill switch does **not** list the operator's own requested action (that would deadlock the loop); it lists only beyond-scope irreversible actions.
 

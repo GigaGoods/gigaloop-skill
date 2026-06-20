@@ -15,8 +15,9 @@ portable sidecar (see SKILL.md "Budget & portability").
 [TASK STATEMENT — what the loop must accomplish, in 1-3 sentences. Fold in any constraints. If a
 detail is assumed rather than confirmed, say so: "Assuming [X]; correct this if wrong."]
 
-[OPTIONAL, only if offloaded: Read [RESOLVED SIDECAR PATH] now. It contains: [SECTION LIST]. Reference
-it throughout.]
+[OPTIONAL, only if offloaded: Read [RESOLVED SIDECAR PATH] now and follow it. Keep this to ONE line —
+do NOT list the file's sections/contents inline; that description is exactly the bloat that blows the
+4000-char budget.]
 
 You are operating autonomously. The user is not watching in real time and cannot answer questions
 mid-task, so asking "Want me to?" or "Shall I?" will block the work. For reversible actions that follow
