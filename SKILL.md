@@ -3,7 +3,7 @@ name: gigaloop
 description: Use when the operator types /gigaloop, or asks you to write a /goal condition, goal prompt, or loop prompt for an autonomous multi-turn run. Triggers on turning the current conversation and task into a single copy-pasteable /goal line. Also covers "build me a goal", "make a loop prompt", "set up an autonomous loop".
 disable-model-invocation: true
 argument-hint: [what the loop should accomplish]
-allowed-tools: Bash(wc *) Bash(mkdir *) Write AskUserQuestion
+allowed-tools: Bash(wc *) Bash(mkdir *) Bash(node *) Write AskUserQuestion
 ---
 
 # gigaloop
@@ -29,7 +29,7 @@ Injected live when the skill loads — INGEST uses these real values to ground t
 1. **INGEST** — from the invocation args + the conversation so far + anything said alongside, extract: the **TASK**, the **DONE state**, **constraints**, and the **RISK** (does the task involve any irreversible/external action — real sends, prod/deploy changes, destructive data or VCS ops?).
 2. **CLARIFY** (via the picker / AskUserQuestion) — apply the decision rule below. One round only.
 3. **DRAFT (offload-first)** — write any heavy detail to the sidecar **first**, then fill the template with a tight task statement + a one-line sidecar reference. Stay within the variable budget (see Budget below) so the first draft is already in range.
-4. **CHECK** — run the checks below; silently measure the condition in *characters* (`wc -m`, not `wc -c`). If anything fails (including over budget), fix it **before** emitting — by offloading more detail, never by trimming in public.
+4. **CHECK (self-lint gate)** — write the drafted condition to `${TMPDIR:-/tmp}/gigaloop-draft.txt` and run `node ${CLAUDE_SKILL_DIR}/evals/lint.mjs ${TMPDIR:-/tmp}/gigaloop-draft.txt`. Fix every **FAIL before emitting** — by offloading more detail or dropping a weak optional, never by trimming the verbatim blocks. If `node` is unavailable, fall back to the manual checks below and say so. The linter **is** the gate; the checks below are its spec (only the authorized-action carve-out, check 7, is a judgment call it can't fully make).
 5. **EMIT** — see the Output contract below.
 
 **Steps 1–4 are silent** — do them in your reasoning, never in the reply.
@@ -43,17 +43,17 @@ digraph clarify {
   "Is there a real task to build a goal from?" [shape=diamond];
   "Ask ONE anchoring question, stop" [shape=box];
   "Irreversible action + a detail needed to do it safely/correctly is missing?" [shape=diamond];
-  "Ask 1-3 picker questions, THEN emit" [shape=box];
+  "Ask 1-3 picker questions (see exception)" [shape=box];
   "Emit directly, no questions" [shape=box];
   "Is there a real task to build a goal from?" -> "Ask ONE anchoring question, stop" [label="no"];
   "Is there a real task to build a goal from?" -> "Irreversible action + a detail needed to do it safely/correctly is missing?" [label="yes"];
-  "Irreversible action + a detail needed to do it safely/correctly is missing?" -> "Ask 1-3 picker questions, THEN emit" [label="yes"];
+  "Irreversible action + a detail needed to do it safely/correctly is missing?" -> "Ask 1-3 picker questions (see exception)" [label="yes"];
   "Irreversible action + a detail needed to do it safely/correctly is missing?" -> "Emit directly, no questions" [label="no"];
 }
 ```
 
 - **No task at all** → ask one question ("What should the loop accomplish?") and stop. This is the **only** case where you don't emit a goal this turn.
-- **Irreversible/external action AND a needed detail is missing** (target host, table/column, API, recipients, the exact validation command) → ask 1–3 picker questions, then emit.
+- **Irreversible/external action AND a needed detail is missing** (target host, table/column, API, recipients, the exact validation command) → ask 1–3 picker questions. **If the missing detail sets the target/scope of the irreversible action**, end the turn and emit next turn with the real answers (see the irreversible-target exception below). For non-target details, emit with the answers or stated assumptions.
 - **Otherwise** → emit directly. Rich, explicit context with no irreversible unknowns gets **zero** questions.
 
 One round only. Leftover unknowns become **stated assumptions** in the goal's context header ("Assuming staging, not prod — correct if wrong").

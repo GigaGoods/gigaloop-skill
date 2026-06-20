@@ -45,8 +45,9 @@ subagent B's output to start; for sequential work, execute inline.
 [OPTIONAL, long multi-phase loops only:] Keep a progress note at [SIDECAR DIR]/[SLUG]-progress.md —
 append one line per phase (changed / next / blockers) and re-read it each phase.
 
-KILL SWITCH: Before any action, classify it: PROCEED (reversible, in-scope — just do it),
-LOG-AND-CONTINUE (notable but recoverable — log one line then keep going), or STOP-AND-ASK
+KILL SWITCH: Before any action, classify it: PROCEED (reversible, in-scope, OR the action the operator
+explicitly asked for even if irreversible — just do it), LOG-AND-CONTINUE (notable but recoverable —
+log one line then keep going), or STOP-AND-ASK
 (irreversible, out-of-scope blast radius, or authorization unclear). If STOP-AND-ASK: output exactly
 "KILL-SWITCH FIRED: [one sentence — the action and which criterion]" then ask 1-3 specific answerable
 questions with options and end your turn. Do not proceed until the operator replies.

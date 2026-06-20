@@ -57,8 +57,11 @@ const CHECKS = [
   }],
   ['done-paste-evidence', 'fail', (_t, c) =>
     [/DONE WHEN/.test(c) && /paste/i.test(c), 'DONE WHEN + paste-the-output present']],
-  ['autonomy-block', 'fail', (_t, c) =>
-    [/You are operating autonomously\./.test(c), 'verbatim autonomy anchor present']],
+  ['autonomy-block', 'fail', (_t, c) => {
+    const anchors = ['You are operating autonomously', 'When you have enough information to act, act', 'Before reporting progress, audit each claim'];
+    const missing = anchors.filter((a) => !c.includes(a));
+    return [missing.length === 0, missing.length ? `missing autonomy paragraph(s): ${missing.join('; ')}` : 'all 3 autonomy paragraphs present'];
+  }],
   ['no-fable-antipatterns', 'fail', (_t, c) => {
     const bad = [/show your reasoning/i, /explain your reasoning/i, /walk through your steps/i,
       /think out loud/i, /transcribe your/i, /if context (gets|fills)/i, /summarize your (working|notes)/i,
@@ -72,11 +75,11 @@ const CHECKS = [
     return [positive && !sentinel, sentinel ? 'self-blocking sentinel ("NOT met if transcript contains …") — goal can never auto-clear'
       : positive ? 'positive, self-clearing' : 'no positive COMPLETION clause'];
   }],
-  ['circuit-breaker', 'warn', (_t, c) =>
+  ['circuit-breaker', 'fail', (_t, c) =>
     [/(no progress|stall or repeat|2 in a row)/i.test(c), 'stuck-loop circuit breaker present']],
-  ['heartbeat', 'warn', (_t, c) =>
+  ['heartbeat', 'fail', (_t, c) =>
     [/STATUS line/i.test(c) && /15 turns/.test(c), 'heartbeat present']],
-  ['backstop', 'warn', (_t, c) =>
+  ['backstop', 'fail', (_t, c) =>
     [/200 turns/.test(c), '200-turn backstop present']],
 ];
 
@@ -119,11 +122,34 @@ COMPLETION: The goal is NOT met if the transcript contains "KILL-SWITCH FIRED:".
 
 Sidecar: /tmp/gigaloop/x.md`;
 
+const BUILTIN_GOOD = `/goal I'm working on a sample task for the operator. They need it done and verified. With that in mind:
+
+Do the sample work in ~/proj and keep the suite green.
+
+You are operating autonomously. The user is not watching in real time and cannot answer questions mid-task, so asking "Want me to?" will block the work. For reversible actions that follow from the original request, proceed without asking. Before ending your turn, check your last paragraph and do any promised work now with tool calls. End your turn only when the task is complete or you are blocked on input only the user can provide.
+
+When you have enough information to act, act. Do not re-derive established facts or narrate options you will not pursue. If weighing a choice, give a recommendation, not a survey.
+
+Before reporting progress, audit each claim against a tool result from this session. Report only work you can point to evidence for; if a step was skipped, say so.
+
+KILL SWITCH: Before any action, classify it: PROCEED (reversible, in-scope — just do it), LOG-AND-CONTINUE (notable but recoverable — log one line then keep going), or STOP-AND-ASK (irreversible, out-of-scope blast radius, or authorization unclear). If STOP-AND-ASK: output exactly "KILL-SWITCH FIRED: [reason]" then ask 1-3 specific questions and end your turn.
+For this task, STOP-AND-ASK applies to: force-push or merge to main; deleting unversioned files; DROP/TRUNCATE/DELETE without WHERE.
+
+DONE WHEN: the work is built and validated. Run \`npm test\` and paste its full output into this conversation; met only when it shows 0 failures. Every ~15 turns paste a STATUS line; if 2 in a row stall or repeat an error, stop and surface it. Backstop: stop at 200 turns and summarize.
+
+COMPLETION: Judge only the latest state. Met when the npm test output is present and shows 0 failures; also finished if the latest message is a question only the operator can answer.`;
+
+const GOOD = process.env.GIGALOOP_GOOD ? readFileSync(process.env.GIGALOOP_GOOD, 'utf8') : BUILTIN_GOOD;
+const OVERBUDGET = BUILTIN_GOOD + '\n' + 'PADDING '.repeat(600);   // > 4000 chars → must fail under-hard-cap
+
 const args = process.argv.slice(2);
 if (args[0] === '--self-test') {
-  const okGood = process.env.GIGALOOP_GOOD ? report('GOOD fixture', readFileSync(process.env.GIGALOOP_GOOD, 'utf8')) : true;
-  const okBad = report('BAD fixture (should FAIL)', BAD);
-  process.exit(okBad === false ? 0 : 1);   // self-test passes when the bad fixture correctly FAILS
+  const good = report('GOOD fixture (should PASS)', GOOD);
+  const bad = report('BAD fixture (should FAIL)', BAD);
+  const over = report('OVERBUDGET fixture (should FAIL)', OVERBUDGET);
+  const pass = good === true && bad === false && over === false;
+  console.log(`\nself-test: GOOD=${good ? 'pass' : 'FAIL'}  BAD=${bad === false ? 'correctly-failed' : 'WRONGLY-PASSED'}  OVERBUDGET=${over === false ? 'correctly-failed' : 'WRONGLY-PASSED'}`);
+  process.exit(pass ? 0 : 1);   // passes only when GOOD passes AND both BAD and OVERBUDGET fail
 }
 
 const text = args[0] ? readFileSync(args[0], 'utf8') : readFileSync(0, 'utf8');
