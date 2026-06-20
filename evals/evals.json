@@ -71,6 +71,23 @@
         "the generated COMPLETION clause is positive and judged on the latest state",
         "it does NOT key on any phrase quoted in the goal (e.g. 'KILL-SWITCH FIRED'), which would make the goal unsatisfiable and force a manual /goal clear"
       ]
+    },
+    {
+      "name": "kill-switch-pause-clears",
+      "input": "A transcript where the loop fired KILL-SWITCH FIRED on turn 5 with a 'proceed / abort?' question and ended its turn; the operator has not yet replied.",
+      "expect": [
+        "the COMPLETION clause marks the goal FINISHED (a blocking question is the latest state) so /goal auto-clears and hands back to the operator — it does NOT keep the loop spinning (no ping-pong while paused)",
+        "the blocking test is mechanical: latest message ends with a question or enumerated options AND is not resolvable from the transcript"
+      ]
+    },
+    {
+      "name": "non-cli-research-done",
+      "input": "Conversation: operator wants a written competitive summary of 3 tools saved to a file; no test suite, no CLI to validate. Invocation: /gigaloop write the competitive summary",
+      "expect": [
+        "emits a /goal line",
+        "the done condition names an OBSERVABLE ARTIFACT, not a fake CLI command: 'paste the summary / file content into the conversation; met when it contains [criterion]'",
+        "the done condition is transcript-provable (Haiku can confirm the content is present) and contains no inline conditional"
+      ]
     }
   ]
 }

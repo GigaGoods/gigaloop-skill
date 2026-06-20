@@ -57,6 +57,12 @@ const CHECKS = [
   }],
   ['done-paste-evidence', 'fail', (_t, c) =>
     [/DONE WHEN/.test(c) && /paste/i.test(c), 'DONE WHEN + paste-the-output present']],
+  ['done-no-conditionals', 'fail', (_t, c) => {
+    // scope to the DONE WHEN block only — the task statement legitimately uses "correct this if wrong"
+    const block = (c.match(/DONE WHEN[\s\S]*?(?=\nCOMPLETION|$)/i) || [''])[0];
+    const hit = /\b(correct if|adjust if|update if|if it differs|if your [^.]*differs)\b/i.test(block);
+    return [!hit, hit ? 'DONE WHEN has an inline conditional (Haiku-unprovable) — name the real value or ask first' : 'no inline conditionals in DONE WHEN'];
+  }],
   ['autonomy-block', 'fail', (_t, c) => {
     const anchors = ['You are operating autonomously', 'When you have enough information to act, act', 'Before reporting progress, audit each claim'];
     const missing = anchors.filter((a) => !c.includes(a));

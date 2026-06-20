@@ -65,14 +65,18 @@ throughout."]
 DONE WHEN: the work is built and validated. Run [EXACT VALIDATION COMMAND — concrete, with real values,
 no inline "correct if differs" conditionals; if you lack a real value it needs, you owed a clarifying
 question first] and paste its full output into this conversation; the goal is met only when that output
-shows [PASS CRITERION]. Every ~15 turns,
+shows [PASS CRITERION]. (No CLI to run — a writing / research / review task? Name an observable artifact
+instead: "paste the [file content / findings] into this conversation; met when it contains [CRITERION]".)
+Every ~15 turns,
 paste a STATUS line (done / remaining / blockers); if 2 in a row stall or repeat an error, stop and
 surface it. Backstop: if you reach 200 turns without completion, stop and paste a STATUS summary.
 
 COMPLETION (for the evaluator): Judge ONLY the most recent state of the conversation, never an earlier
 message. This goal is met when the validation output above is present and shows [PASS CRITERION]. It is
-ALSO finished if the loop's latest message is a specific question that only the operator can answer
-(genuinely blocked), so a paused loop ends cleanly instead of re-looping. Do NOT key on any phrase
+ALSO finished if the loop is genuinely blocked — its latest message (a) ends with a question mark or an
+enumerated list of options AND (b) asks something that cannot be resolved from information already in
+this transcript (a rhetorical check-in or a progress note ending with a question does NOT count) — so a
+paused loop ends cleanly instead of re-looping. Do NOT key on any phrase
 quoted in this goal (including the kill-switch wording) — judge solely by the latest validation evidence
 or the latest blocking question.
 ```

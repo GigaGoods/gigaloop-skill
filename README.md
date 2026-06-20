@@ -48,11 +48,22 @@ If a goal needs heavy context, gigaloop offloads it to a sidecar file and refere
 The linter is the runnable harness. It mechanically verifies an emitted `/goal` — no LLM, no network:
 
 ```bash
-node evals/lint.mjs path/to/goal.txt    # or: pbpaste | node evals/lint.mjs
-node evals/lint.mjs --self-test         # runs a broken fixture that must FAIL
+node evals/lint.mjs path/to/goal.txt              # lint a goal file
+pbpaste | node evals/lint.mjs                      # macOS clipboard (Linux: xclip -o | node evals/lint.mjs)
+node evals/lint.mjs --self-test                    # GOOD fixture must PASS; BAD + OVERBUDGET must FAIL
+GIGALOOP_GOOD=my-good-goal.txt node evals/lint.mjs --self-test   # check against your own known-good goal
 ```
 
-It checks: under the 4000-char cap, no trailing `Sidecar:` note, paste-the-evidence done condition, verbatim autonomy block, no self-blocking completion sentinel, kill switch present, no Fable-5 anti-patterns, and the circuit-breaker / heartbeat / backstop. Exit `0` = clean, `1` = at least one failure.
+It checks: under the 4000-char cap, no trailing `Sidecar:` note, paste-the-evidence done condition, all three verbatim autonomy paragraphs, no self-blocking completion sentinel, kill switch present, no inline conditionals in the done block, no Fable-5 anti-patterns, and the circuit-breaker / heartbeat / backstop. Exit `0` = clean, `1` = at least one failure. The skill runs this same linter as a self-gate before it emits a goal.
+
+## Cross-runtime portability
+
+gigaloop follows the [agentskills.io](https://agentskills.io) standard and works across runtimes, but two pieces are Claude Code-specific and degrade gracefully elsewhere:
+
+- The `` !`cmd` `` **dynamic context injection** in `SKILL.md` (cwd / branch / recent commits) is Claude Code-only. Other runtimes (Codex CLI, Cursor, Copilot) silently skip it — the skill still works; the generated goal just won't have a pre-filled context header, so paste those values as `/gigaloop` args.
+- `disable-model-invocation: true` is also Claude Code-only; runtimes that don't recognize the key ignore it safely.
+
+The linter (`evals/lint.mjs`) only needs Node and is fully cross-platform.
 
 ## License
 
