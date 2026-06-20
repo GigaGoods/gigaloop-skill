@@ -109,4 +109,7 @@ The hard cap is 4000 **characters**. **Keep the reply ≤ ~3,800** — ~200 of m
 
 ## Evals
 
-Regression scenarios live in `${CLAUDE_SKILL_DIR}/evals/evals.json` (rich-code, no-task, irreversible+underspecified, prod-deploy, heavy-budget). Run them with the skill-creator plugin (subagent-per-case, with/without benchmark) if installed.
+Two layers check the skill's output:
+
+- **Goal linter (mechanical, no LLM)** — `node ${CLAUDE_SKILL_DIR}/evals/lint.mjs <goal-file>` (or pipe a goal on stdin) checks an emitted `/goal` against the mechanical rules: under the 4000 cap, no trailing `Sidecar:` note, paste-the-evidence done condition, verbatim autonomy block, no self-blocking completion sentinel, concrete kill switch, no Fable anti-patterns, circuit-breaker/heartbeat/backstop. Exit 0 = clean; `--self-test` runs a broken fixture that must FAIL. Pipe any goal you emit through it before trusting it.
+- **Scenario evals (behavioral, needs an LLM)** — `${CLAUDE_SKILL_DIR}/evals/evals.json` holds 7 judgment-call cases (emits-vs-asks, the authorized-action carve-out, etc.) for the skill-creator plugin (subagent-per-case, with/without benchmark).
