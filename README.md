@@ -62,6 +62,7 @@ gigaloop follows the [agentskills.io](https://agentskills.io) standard and works
 
 - The `` !`cmd` `` **dynamic context injection** in `SKILL.md` (cwd / branch / recent commits) is Claude Code-only. Other runtimes (Codex CLI, Cursor, Copilot) silently skip it — the skill still works; the generated goal just won't have a pre-filled context header, so paste those values as `/gigaloop` args.
 - `disable-model-invocation: true` is also Claude Code-only; runtimes that don't recognize the key ignore it safely.
+- **Codex CLI `/goal`** uses the same architecture (verifiable condition + a separate evaluator model + loop-until-done), so gigaloop goals work there too — with one delta: Codex marks completion with an explicit `TASK_COMPLETE` token. gigaloop adds that automatically when targeting Codex (see "Targeting Codex's /goal" in `SKILL.md`); the kill switch, validation, autonomy, and budget are identical.
 
 The linter (`evals/lint.mjs`) only needs Node and is fully cross-platform.
 

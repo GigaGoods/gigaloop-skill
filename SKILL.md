@@ -110,6 +110,16 @@ The hard cap is 4000 **characters**. **Keep the reply ≤ ~3,800** — ~200 of m
 
 **REQUIRED:** copy the fill-in template and verbatim blocks from `${CLAUDE_SKILL_DIR}/goal-template.md`.
 
+## Targeting Codex's /goal (runtime carve-out)
+
+Default output targets **Claude Code's `/goal`**. **Codex CLI** also has `/goal` with the same architecture (a verifiable completion condition + a separate small evaluator model + loop-until-done), so the kill switch, transcript-provable validation, the autonomy block, and the budget all carry over **unchanged**. Apply these deltas **only** when the goal is for Codex (the operator says so, or you are the model running under Codex):
+
+- **Completion signal:** Codex marks done with an explicit token — add to the DONE block: "When [criterion] is confirmed, output `TASK_COMPLETE`." Claude's evaluator judges the condition from the transcript and needs no token, so this line stays **out** of Claude goals.
+- **Injection / frontmatter:** the `` !`cmd` `` context injection and the `disable-model-invocation` / `allowed-tools` keys are Claude Code-only; on Codex they're skipped harmlessly — fill the context header from the operator's args instead.
+- **Budget:** keep ≤ ~3,800 chars (safe for both).
+
+Do **not** branch the kill switch, autonomy, or completion-positivity logic — only add the `TASK_COMPLETE` signal. Claude goals stay unchanged.
+
 ## Evals
 
 Two layers check the skill's output:

@@ -67,6 +67,8 @@ no inline "correct if differs" conditionals; if you lack a real value it needs, 
 question first] and paste its full output into this conversation; the goal is met only when that output
 shows [PASS CRITERION]. (No CLI to run — a writing / research / review task? Name an observable artifact
 instead: "paste the [file content / findings] into this conversation; met when it contains [CRITERION]".)
+[OPTIONAL, Codex /goal only — Codex needs an explicit done token: when [PASS CRITERION] is confirmed,
+output TASK_COMPLETE. Omit on Claude Code.]
 Every ~15 turns,
 paste a STATUS line (done / remaining / blockers); if 2 in a row stall or repeat an error, stop and
 surface it. Backstop: if you reach 200 turns without completion, stop and paste a STATUS summary.
