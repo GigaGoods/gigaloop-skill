@@ -91,7 +91,7 @@ or the latest blocking question.
 |---|---|
 | `[LARGER TASK]` / `[WHO]` / `[WHAT THE OUTPUT ENABLES]` | The Fable "give the reason" framing — grounds the first turn and gives the evaluator intent. |
 | `[TASK STATEMENT]` | The concrete work. Fold constraints in. Mark assumptions explicitly. |
-| `[RESOLVED SIDECAR PATH]` | Absolute path you already wrote, resolved from `${XDG_CACHE_HOME:-$HOME/.cache}/gigaloop/`. Omit the two sidecar lines if no offload. |
+| `[RESOLVED SIDECAR PATH]` | Absolute path you already wrote, resolved from `${XDG_CACHE_HOME:-$HOME/.cache}/gigagoal/`. Omit the two sidecar lines if no offload. |
 | `[3-6 CONCRETE ACTION CATEGORIES]` | Specifics, never adjectives. **Beyond-scope only** — never the operator's own requested action (that deadlocks the loop). Or the explicit "none beyond the requested work" line. |
 | `[EXACT VALIDATION COMMAND]` / `[PASS CRITERION]` | A real, concrete command whose pasted output proves done (e.g. `npm test` → "0 failures"; `curl -sf https://host/health` → "HTTP 200"; `SELECT COUNT(*) FROM leads WHERE sent_at IS NULL` → "0"). No inline conditionals; if you'd have to guess a path/host/URL, ask first. |
 

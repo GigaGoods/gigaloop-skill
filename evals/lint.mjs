@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// gigaloop goal linter — the runnable harness for the gigaloop skill.
+// gigagoal goal linter — the runnable harness for the gigagoal skill.
 //
-// gigaloop has no app to launch; its "output" is a /goal condition an LLM emits.
+// gigagoal has no app to launch; its "output" is a /goal condition an LLM emits.
 // This linter is the driver: it mechanically checks an emitted /goal against the
 // rules the skill enforces, so the *mechanical* checks live in code (regex/length)
 // and the SKILL.md prose is left for the judgment calls.
@@ -16,7 +16,7 @@
 import { readFileSync } from 'node:fs';
 
 const HARD_CAP = 4000;       // /goal's character limit
-const TARGET = 3800;         // gigaloop's budget target (leaves ~200 paste margin)
+const TARGET = 3800;         // gigagoal's budget target (leaves ~200 paste margin)
 
 const cp = (s) => Array.from(s).length;   // count Unicode code points, like /goal & python len()
 
@@ -126,7 +126,7 @@ DONE WHEN: the work is done and correct.
 
 COMPLETION: The goal is NOT met if the transcript contains "KILL-SWITCH FIRED:".
 
-Sidecar: /tmp/gigaloop/x.md`;
+Sidecar: /tmp/gigagoal/x.md`;
 
 const BUILTIN_GOOD = `/goal I'm working on a sample task for the operator. They need it done and verified. With that in mind:
 
@@ -145,7 +145,7 @@ DONE WHEN: the work is built and validated. Run \`npm test\` and paste its full 
 
 COMPLETION: Judge only the latest state. Met when the npm test output is present and shows 0 failures; also finished if the latest message is a question only the operator can answer.`;
 
-const GOOD = process.env.GIGALOOP_GOOD ? readFileSync(process.env.GIGALOOP_GOOD, 'utf8') : BUILTIN_GOOD;
+const GOOD = process.env.GIGAGOAL_GOOD ? readFileSync(process.env.GIGAGOAL_GOOD, 'utf8') : BUILTIN_GOOD;
 const OVERBUDGET = BUILTIN_GOOD + '\n' + 'PADDING '.repeat(600);   // > 4000 chars → must fail under-hard-cap
 
 const args = process.argv.slice(2);

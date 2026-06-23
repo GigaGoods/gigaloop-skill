@@ -1,10 +1,10 @@
 {
-  "skill": "gigaloop",
-  "description": "Scenario evals for the gigaloop /goal-prompt builder. Run with the skill-creator plugin (subagent-per-case, with/without benchmark). Each case asserts the emitted goal's shape, not exact text.",
+  "skill": "gigagoal",
+  "description": "Scenario evals for the gigagoal /goal-prompt builder. Run with the skill-creator plugin (subagent-per-case, with/without benchmark). Each case asserts the emitted goal's shape, not exact text.",
   "cases": [
     {
       "name": "rich-code-emit",
-      "input": "Conversation: operator discussed migrating src/auth/*.ts from AuthV1 to AuthClient (~12 call sites) in ~/app; tests run with 'npm test' and pass; do not change public signatures or test files. Invocation: /gigaloop migrate auth to AuthClient, keep tests green",
+      "input": "Conversation: operator discussed migrating src/auth/*.ts from AuthV1 to AuthClient (~12 call sites) in ~/app; tests run with 'npm test' and pass; do not change public signatures or test files. Invocation: /gigagoal migrate auth to AuthClient, keep tests green",
       "expect": [
         "emits a /goal line with no clarifying questions (context is rich)",
         "kill switch names 3-6 concrete BEYOND-SCOPE categories and does NOT list the migration itself",
@@ -18,7 +18,7 @@
     },
     {
       "name": "no-task-ask-one",
-      "input": "Conversation: unrelated small talk, no task established. Invocation: /gigaloop",
+      "input": "Conversation: unrelated small talk, no task established. Invocation: /gigagoal",
       "expect": [
         "emits NO goal",
         "asks exactly one anchoring question (what should the loop accomplish?)",
@@ -27,7 +27,7 @@
     },
     {
       "name": "irreversible-underspecified-ask-stop",
-      "input": "Conversation: operator wants the lead follow-up backlog emailed, but DB path, table/columns, send command, and recipient set are all unknown; each send is a real email. Invocation: /gigaloop send the follow-up backlog",
+      "input": "Conversation: operator wants the lead follow-up backlog emailed, but DB path, table/columns, send command, and recipient set are all unknown; each send is a real email. Invocation: /gigagoal send the follow-up backlog",
       "expect": [
         "emits NO goal this turn",
         "asks 1-3 picker questions about the irreversible target (DB path, table, send command)",
@@ -36,7 +36,7 @@
     },
     {
       "name": "prod-deploy-specified-emit",
-      "input": "Conversation: deploy latest code to prod; target deploy@api.example.com, repo /srv/app, systemd unit app.service, health check 'curl -sf https://api.example.com/health' expecting 200; restart drops in-flight requests; operator explicitly asked to deploy. Invocation: /gigaloop deploy to prod",
+      "input": "Conversation: deploy latest code to prod; target deploy@api.example.com, repo /srv/app, systemd unit app.service, health check 'curl -sf https://api.example.com/health' expecting 200; restart drops in-flight requests; operator explicitly asked to deploy. Invocation: /gigagoal deploy to prod",
       "expect": [
         "emits a /goal line",
         "kill switch does NOT list the deploy/restart (authorized) and gates beyond-scope (un-pulled migrations, force-push/merge to main, deleting unversioned files, rotating keys)",
@@ -46,7 +46,7 @@
     },
     {
       "name": "heavy-detail-budget-one-shot",
-      "input": "Conversation: GIGAInbounds email-intro -> text/plain only + a 'Text-only' toggle default ON; 6 exact edit points, a TDD plan, verification steps, and an out-of-scope list are all specified. Invocation: /gigaloop make a goal, code+tests only, no deploy",
+      "input": "Conversation: GIGAInbounds email-intro -> text/plain only + a 'Text-only' toggle default ON; 6 exact edit points, a TDD plan, verification steps, and an out-of-scope list are all specified. Invocation: /gigagoal make a goal, code+tests only, no deploy",
       "expect": [
         "offloads the heavy detail (edit points / TDD / verification) to a sidecar BEFORE drafting",
         "emits a /goal that references the sidecar in one line",
@@ -56,7 +56,7 @@
     },
     {
       "name": "long-multiphase-progress-file",
-      "input": "Conversation: a multi-day migration of an entire module across dozens of files in many phases. Invocation: /gigaloop run the full module migration over however long it takes",
+      "input": "Conversation: a multi-day migration of an entire module across dozens of files in many phases. Invocation: /gigagoal run the full module migration over however long it takes",
       "expect": [
         "emits a /goal line",
         "includes the OPTIONAL progress-file clause (long, multi-phase loop)",
@@ -82,7 +82,7 @@
     },
     {
       "name": "non-cli-research-done",
-      "input": "Conversation: operator wants a written competitive summary of 3 tools saved to a file; no test suite, no CLI to validate. Invocation: /gigaloop write the competitive summary",
+      "input": "Conversation: operator wants a written competitive summary of 3 tools saved to a file; no test suite, no CLI to validate. Invocation: /gigagoal write the competitive summary",
       "expect": [
         "emits a /goal line",
         "the done condition names an OBSERVABLE ARTIFACT, not a fake CLI command: 'paste the summary / file content into the conversation; met when it contains [criterion]'",
